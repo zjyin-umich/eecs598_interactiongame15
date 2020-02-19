@@ -38,16 +38,18 @@ while True:
     
     # Keep track of player position
     keys = [False, False, False, False]
-    playerpos = [100, 100]
+    playerpos = [150, 150]
 
     accuracy = [0, 0]
     arrows = []
     movement_displacement_value = 3
+    player_first_position = 150
+    player_second_position = 350
     arrow_speed = 10
 
-    badtimer = 100
+    badtimer = 300
     badtimer1 = 0
-    badguys = [[640, 100]]
+    badguys = [[640, 150]]
     healthvalue = 200
 
     running = True
@@ -69,7 +71,8 @@ while True:
         position = pygame.mouse.get_pos()
         angle = math.atan2(position[1] - (playerpos[1] + 32), 
             position[0] - (playerpos[0] + 26))
-        playerrot = pygame.transform.rotate(player, 360 - angle * 57.29)
+        # playerrot = pygame.transform.rotate(player, 360 - angle * 57.29)
+        playerrot = pygame.transform.rotate(player, 0)
         playerrot_pos = (playerpos[0] - playerrot.get_rect().width / 2, 
             playerpos[1] - playerrot.get_rect().height / 2)
         screen.blit(playerrot, playerrot_pos)
@@ -90,13 +93,14 @@ while True:
             index += 1
 
             for projectile in arrows:
-                arrow1 = pygame.transform.rotate(arrow, 360 - projectile[0] * 57.29)
+                # arrow1 = pygame.transform.rotate(arrow, 360 - projectile[0] * 57.29)
+                arrow1 = pygame.transform.rotate(arrow, 0)
                 screen.blit(arrow1, (projectile[1], projectile[2]))
 
         # Draw badgers
         if badtimer == 0:
-            badguys.append([640, random.randint(50, 430)])
-            badtimer = 100 - (badtimer1 * 2)
+            badguys.append([640, random.choice([player_first_position, player_second_position])])
+            badtimer = 300 - (badtimer1 * 2)
             if badtimer1 >= 35:
                 badtimer1 = 35
             else:
@@ -106,7 +110,7 @@ while True:
         for index, badguy in enumerate(badguys):
             if badguy[0] < -64:
                 badguys.pop(index)
-            badguy[0] -= 7
+            badguy[0] -= 3
 
             # Detect collision with castle
             badrect = pygame.Rect(badguyimg.get_rect())
@@ -135,10 +139,10 @@ while True:
             screen.blit(badguyimg, badguy)
 
         # Draw castle
-        screen.blit(castle, (0, 30))
-        screen.blit(castle, (0, 135))
-        screen.blit(castle, (0, 240))
-        screen.blit(castle, (0, 345))
+        # screen.blit(castle, (0, 30))
+        screen.blit(castle, (0, 100))
+        screen.blit(castle, (0, 300))
+        # screen.blit(castle, (0, 345))
 
         # Draw clock
         font = pygame.font.Font(None, 24)
@@ -170,46 +174,61 @@ while True:
             if event.type == pygame.KEYDOWN:
                 if event.key == K_w:
                     keys[0] = True
-                if event.key == K_a:
-                    keys[1] = True
-                if event.key == K_s:
+                # if event.key == K_a:
+                #     keys[1] = True
+                elif event.key == K_s:
                     keys[2] = True
-                if event.key == K_d:
-                    keys[3] = True
-                if event.key == K_q:
+                # if event.key == K_d:
+                #     keys[3] = True
+                elif event.key == K_q:
                     pygame.quit()
                     exit(0)
+                elif event.key == K_SPACE:
+                    # position = pygame.mouse.get_pos()
+                    shoot.play()
+                    accuracy[1] += 1
+                    arrows.append([
+                        # math.atan2(position[1] - (playerrot_pos[1] + 32), 
+                        # position[0] - (playerrot_pos[0] + 26)),
+                        0,
+                        playerrot_pos[0] + 32,
+                        playerrot_pos[1] + 32
+                    ])
 
             if event.type == pygame.KEYUP:
                 if event.key==pygame.K_w:
                     keys[0]=False
-                elif event.key==pygame.K_a:
-                    keys[1]=False
+                # elif event.key==pygame.K_a:
+                #     keys[1]=False
                 elif event.key==pygame.K_s:
                     keys[2]=False
-                elif event.key==pygame.K_d:
-                    keys[3]=False
+                # elif event.key==pygame.K_d:
+                #     keys[3]=False
 
-            # Handle mouse click to shoot arrows
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                position = pygame.mouse.get_pos()
-                shoot.play()
-                accuracy[1] += 1
-                arrows.append([
-                    math.atan2(position[1] - (playerrot_pos[1] + 32), 
-                    position[0] - (playerrot_pos[0] + 26)),
-                    playerrot_pos[0] + 32,
-                    playerrot_pos[1] + 32
-                ])
+            # # Handle mouse click to shoot arrows
+            # if event.type == pygame.MOUSEBUTTONDOWN:
+            #     # position = pygame.mouse.get_pos()
+            #     shoot.play()
+            #     accuracy[1] += 1
+            #     arrows.append([
+            #         # math.atan2(position[1] - (playerrot_pos[1] + 32), 
+            #         # position[0] - (playerrot_pos[0] + 26)),
+            #         0,
+            #         playerrot_pos[0] + 32,
+            #         playerrot_pos[1] + 32
+            #     ])
 
         if keys[0]:
-            playerpos[1] -= movement_displacement_value
+            # playerpos[1] -= movement_displacement_value
+            playerpos[1] = player_first_position
+
         if keys[2]:
-            playerpos[1] += movement_displacement_value
-        if keys[1]:
-            playerpos[0] -= movement_displacement_value
-        if keys[3]:
-            playerpos[0] += movement_displacement_value
+            # playerpos[1] += movement_displacement_value
+            playerpos[1] = player_second_position
+        # if keys[1]:
+        #     playerpos[0] -= movement_displacement_value
+        # if keys[3]:
+        #     playerpos[0] += movement_displacement_value
 
         # Check for win/lose
         if pygame.time.get_ticks() >= 90000:

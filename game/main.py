@@ -2,6 +2,7 @@ import pygame
 import math
 from pygame.locals import *
 import random
+import time
 
 # Initialize game object and screen
 pygame.init()
@@ -40,6 +41,8 @@ while True:
     keys = [False, False, False, False]
     playerpos = [150, 150]
 
+    t0 = time.time()
+
     accuracy = [0, 0]
     arrows = []
     movement_displacement_value = 3
@@ -47,7 +50,7 @@ while True:
     player_second_position = 350
     arrow_speed = 10
 
-    badtimer = 300
+    badtimer = 200
     badtimer1 = 0
     badguys = [[640, 150]]
     healthvalue = 200
@@ -100,7 +103,7 @@ while True:
         # Draw badgers
         if badtimer == 0:
             badguys.append([640, random.choice([player_first_position, player_second_position])])
-            badtimer = 300 - (badtimer1 * 2)
+            badtimer = 200 - (badtimer1 * 2)
             if badtimer1 >= 35:
                 badtimer1 = 35
             else:
@@ -146,9 +149,10 @@ while True:
 
         # Draw clock
         font = pygame.font.Font(None, 24)
+        dt = (time.time() - t0) * 1000
         survivedtext = font.render("{}:{}".format(
-            (90000 - pygame.time.get_ticks()) / 60000,
-            str((90000 - pygame.time.get_ticks()) / 1000 % 60).zfill(2)),
+            int((90000 - dt) / 60000),
+            str(int((90000 - dt) / 1000 % 60)).zfill(2)),
             True, (0, 0, 0))
         textRect = survivedtext.get_rect()
         textRect.topright = [635, 5]
@@ -231,7 +235,7 @@ while True:
         #     playerpos[0] += movement_displacement_value
 
         # Check for win/lose
-        if pygame.time.get_ticks() >= 90000:
+        if dt >= 90000:
             running = False
             exitcode = True
         elif healthvalue <= 0:

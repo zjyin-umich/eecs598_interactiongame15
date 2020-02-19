@@ -168,21 +168,21 @@ class ProcessImage:
         swipe_direction = self.detect_swipe_direction()
         
         if swipe_direction == "swiped_up":
-            print("Swiping up")
+            # print("Swiping up")
             self.touch_history_swipe_area = []
             FUNCTIONS_INPUT[0] = True
 
         elif swipe_direction == "swiped_down":
-            print("Swiping down")
+            # print("Swiping down")
             self.touch_history_swipe_area = []
             FUNCTIONS_INPUT[1] = True
 
         touch_type = self.detect_multi_touch(touch_play_area)
         if touch_type == "single_touch":
-            print("Detecting single touch")
+            # print("Detecting single touch")
             FUNCTIONS_INPUT[2] = True
         if touch_type == "multi_touch":
-            print("Detecting multi touch")
+            # print("Detecting multi touch")
             FUNCTIONS_INPUT[4] = True
 
         if len(centers) == 2:
@@ -195,24 +195,9 @@ class ProcessImage:
 
         pinch_event = self.detect_pinch()
         if pinch_event == "pinch":
-            print("Pinch Detected")
+            # print("Pinch Detected")
             FUNCTIONS_INPUT[3] = True
         # print("detecting pinch")
-        # if int(self.t0 - time.time()) % 20 == 5:
-        #     # swipe_event = pygame.event.Event(pygame.KEYDOWN, unicode='s', key=K_s, mod=0, scancode=39, window=None)
-        #     # pygame.event.post(swipe_event)
-        #     print("Pushing event up")
-        #     FUNCTIONS_INPUT[0] = True
-
-        # elif int(self.t0 - time.time()) % 20 == 15:
-        #     # swipe_event = pygame.event.Event(pygame.KEYDOWN, unicode='s', key=K_s, mod=0, scancode=39, window=None)
-        #     # swipe_event = pygame.event.Event(pygame.KEYDOWN, unicode='w', key=K_w, mod=0, scancode=25, window=None)
-        #     # pygame.event.post(swipe_event)
-        #     print("Pushing event down")
-        #     FUNCTIONS_INPUT[1] = True
-
-        if pinch_event != "no_pinch":
-            print(pinch_event)
 
         cv.imshow('Contours', frame)
 
@@ -272,11 +257,14 @@ while True:
     player_first_position = 150
     player_second_position = 350
     arrow_speed = 5
+    baddie_speed = 0.5
 
-    badtimer = 2000
+    badtimer = 200
     badtimer1 = 0
     badguys = [[640, 150]]
     healthvalue = 200
+
+    game_duration = 60000
 
     running = True
     exitcode = False
@@ -337,7 +325,7 @@ while True:
         for index, badguy in enumerate(badguys):
             if badguy[0] < -64:
                 badguys.pop(index)
-            badguy[0] -= 0.3
+            badguy[0] -= baddie_speed
 
             # Detect collision with castle
             badrect = pygame.Rect(badguyimg.get_rect())
@@ -375,12 +363,29 @@ while True:
         font = pygame.font.Font(None, 24)
         dt = (time.time() - t0) * 1000
         survivedtext = font.render("{}:{}".format(
-            int((90000 - dt) / 60000),
-            str(int((90000 - dt) / 1000 % 60)).zfill(2)),
+            int((game_duration - dt) / game_duration),
+            str(int((game_duration - dt) / 1000 % 60)).zfill(2)),
             True, (0, 0, 0))
         textRect = survivedtext.get_rect()
         textRect.topright = [635, 5]
         screen.blit(survivedtext, textRect)
+
+        # Draw Instructions
+        font = pygame.font.Font(None, 20)
+        instructionsText = font.render("1. Swipe to change lanes", True, (0, 0, 0))
+        textRect = instructionsText.get_rect()
+        textRect.topleft = [15, 30]
+        screen.blit(instructionsText, textRect)
+
+        instructionsText = font.render("2. Single tap to shoot arrows", True, (0, 0, 0))
+        textRect = instructionsText.get_rect()
+        textRect.topleft = [15, 45]
+        screen.blit(instructionsText, textRect)
+
+        instructionsText = font.render("3. Double tap to shoot quizzes", True, (0, 0, 0))
+        textRect = instructionsText.get_rect()
+        textRect.topleft = [15, 60]
+        screen.blit(instructionsText, textRect)
 
         # Draw healthbar
         screen.blit(healthbar, (5, 5))
@@ -400,7 +405,7 @@ while True:
 
             # Handle key presses to move character
             if event.type == pygame.KEYDOWN:
-                print("Received Keydown", event)
+                # print("Received Keydown", event)
                 if event.key == K_w:
                     keys[0] = True
                 # if event.key == K_a:
@@ -454,13 +459,13 @@ while True:
 
         if FUNCTIONS_INPUT[0]:
             # playerpos[1] -= movement_displacement_value
-            print("Handling event up")
+            # print("Handling event up")
             playerpos[1] = player_first_position
             FUNCTIONS_INPUT[0] = False
 
         if FUNCTIONS_INPUT[1]:
             # playerpos[1] += movement_displacement_value
-            print("Handling event down")
+            # print("Handling event down")
             playerpos[1] = player_second_position
             FUNCTIONS_INPUT[1] = False
 
@@ -492,7 +497,7 @@ while True:
         #     playerpos[0] += movement_displacement_value
 
         # Check for win/lose
-        if dt >= 90000:
+        if dt >= game_duration:
             running = False
             exitcode = True
             FUNCTIONS_INPUT[3] = False
@@ -523,6 +528,14 @@ while True:
         textRect.centery = screen.get_rect().centery + 24
         screen.blit(youwin, (0, 0))
         screen.blit(text, textRect)
+
+
+    # Draw Instructions
+    font = pygame.font.Font(None, 20)
+    instructionsText = font.render("Pinch to restart game", True, (0, 0, 0))
+    textRect = instructionsText.get_rect()
+    textRect.topleft = [270, 380]
+    screen.blit(instructionsText, textRect)
 
     restart = False
     

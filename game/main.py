@@ -9,7 +9,7 @@ import sys
 import datetime
 from threading import Thread
 
-FUNCTIONS_INPUT = [False, False, False]
+FUNCTIONS_INPUT = [False, False, False, False, False]
 
 # Class for OpenCV Stuff
 class ProcessImage:
@@ -47,18 +47,27 @@ class ProcessImage:
         return "no_swipe"
 
     def detect_pinch(self):
-        prev_distance = 100
         # print(self.two_finger_history)
         if len(self.two_finger_history) < 3:
             return "no_pinch"
+        distances = []
         for first, second in self.two_finger_history:
-            current_distance = abs(first[1] - second[1])
-            print(len(self.two_finger_history), current_distance, prev_distance)
-            if current_distance > prev_distance:
-                return "no_pinch"
-            prev_distance = current_distance
+            current_distance = math.sqrt(((first[0] - second[0]) ** 2) + ((first[1] - second[1]) ** 2))
+            distances.append(current_distance)
+
         self.two_finger_history = []
-        return "pinch"
+
+        sorted_distances = distances[:]
+        sorted_distances.sort()
+        reverse_distances = sorted_distances[:]
+        reverse_distances.reverse()
+
+        if sorted_distances == distances:
+            return "reverse_pinch"
+        elif reverse_distances == distances:
+            return "pinch"
+        
+        return "no_pinch"
 
     def DetectObject(self):
 
@@ -78,7 +87,7 @@ class ProcessImage:
             if(rc == True):
                     
                 #[pinkyX, pinkyY] = self.DetectBall(frame, 0, 154, 83, 19, 239, 115)
-                self.DetectBall(frame, 0, 154, 142, 180, 255, 255)
+                self.DetectBall(frame, 118, 117, 130, 130, 255, 255)
 
                 
                 
@@ -156,12 +165,25 @@ class ProcessImage:
             cv.putText(frame, "x: {}, y: {}".format(int(centers[i][0]), int(centers[i][1]), int(radius[i])), (int(centers[i][0] + radius[i] + 10), int(centers[i][1])), cv.FONT_HERSHEY_SIMPLEX,0.5, [0,0,255])
             cv.putText(frame, "{}".format(int(radius[i])), (int(centers[i][0] + radius[i] + 10), int(centers[i][1] + 20)), cv.FONT_HERSHEY_SIMPLEX,0.5, [0,0,255])
     
-        # swipe_direction = self.detect_swipe_direction()
-        # if swipe_direction != "no_swipe":
-        #     print(swipe_direction)
-        # touch_type = self.detect_multi_touch(touch_play_area)
-        # if touch_type != "no_touch":
-        #     print(touch_type)
+        swipe_direction = self.detect_swipe_direction()
+        
+        if swipe_direction == "swiped_up":
+            print("Swiping up")
+            self.touch_history_swipe_area = []
+            FUNCTIONS_INPUT[0] = True
+
+        elif swipe_direction == "swiped_down":
+            print("Swiping down")
+            self.touch_history_swipe_area = []
+            FUNCTIONS_INPUT[1] = True
+
+        touch_type = self.detect_multi_touch(touch_play_area)
+        if touch_type == "single_touch":
+            print("Detecting single touch")
+            FUNCTIONS_INPUT[2] = True
+        if touch_type == "multi_touch":
+            print("Detecting multi touch")
+            FUNCTIONS_INPUT[4] = True
 
         if len(centers) == 2:
             self.two_finger_history.append(centers)
@@ -172,19 +194,22 @@ class ProcessImage:
             self.two_finger_history = []
 
         pinch_event = self.detect_pinch()
+        if pinch_event == "pinch":
+            print("Pinch Detected")
+            FUNCTIONS_INPUT[3] = True
         # print("detecting pinch")
-        if int(self.t0 - time.time()) % 20 == 5:
-            # swipe_event = pygame.event.Event(pygame.KEYDOWN, unicode='s', key=K_s, mod=0, scancode=39, window=None)
-            # pygame.event.post(swipe_event)
-            print("Pushing event up")
-            FUNCTIONS_INPUT[0] = True
+        # if int(self.t0 - time.time()) % 20 == 5:
+        #     # swipe_event = pygame.event.Event(pygame.KEYDOWN, unicode='s', key=K_s, mod=0, scancode=39, window=None)
+        #     # pygame.event.post(swipe_event)
+        #     print("Pushing event up")
+        #     FUNCTIONS_INPUT[0] = True
 
-        elif int(self.t0 - time.time()) % 20 == 15:
-            # swipe_event = pygame.event.Event(pygame.KEYDOWN, unicode='s', key=K_s, mod=0, scancode=39, window=None)
-            # swipe_event = pygame.event.Event(pygame.KEYDOWN, unicode='w', key=K_w, mod=0, scancode=25, window=None)
-            # pygame.event.post(swipe_event)
-            print("Pushing event down")
-            FUNCTIONS_INPUT[1] = True
+        # elif int(self.t0 - time.time()) % 20 == 15:
+        #     # swipe_event = pygame.event.Event(pygame.KEYDOWN, unicode='s', key=K_s, mod=0, scancode=39, window=None)
+        #     # swipe_event = pygame.event.Event(pygame.KEYDOWN, unicode='w', key=K_w, mod=0, scancode=25, window=None)
+        #     # pygame.event.post(swipe_event)
+        #     print("Pushing event down")
+        #     FUNCTIONS_INPUT[1] = True
 
         if pinch_event != "no_pinch":
             print(pinch_event)
@@ -205,12 +230,16 @@ width, height = 640, 480
 screen = pygame.display.set_mode((width, height))
 
 # Load Player Sprite
-player = pygame.image.load("resources/images/dude.png")
+player = pygame.image.load("resources/images/BOSS_sample.jpg")
 
 # Load Other Sprites
 grass = pygame.image.load("resources/images/grass.png")
 castle = pygame.image.load("resources/images/castle.png")
 arrow = pygame.image.load("resources/images/bullet.png")
+
+quiz = pygame.image.load("resources/images/quiz_bullet.jpg")
+quiz = pygame.transform.scale(quiz, (40, 35))
+
 badguyimg = pygame.image.load("resources/images/badguy.png")
 healthbar = pygame.image.load("resources/images/healthbar.png")
 health = pygame.image.load("resources/images/health.png")
@@ -242,12 +271,12 @@ while True:
     movement_displacement_value = 3
     player_first_position = 150
     player_second_position = 350
-    arrow_speed = 10
+    arrow_speed = 5
 
-    badtimer = 200
+    badtimer = 2000
     badtimer1 = 0
     badguys = [[640, 150]]
-    healthvalue = 2000
+    healthvalue = 200
 
     running = True
     exitcode = False
@@ -291,23 +320,24 @@ while True:
 
             for projectile in arrows:
                 # arrow1 = pygame.transform.rotate(arrow, 360 - projectile[0] * 57.29)
-                arrow1 = pygame.transform.rotate(arrow, 0)
+                arrow1 = pygame.transform.rotate(projectile[3], 0)
                 screen.blit(arrow1, (projectile[1], projectile[2]))
 
         # Draw badgers
         if badtimer == 0:
             badguys.append([640, random.choice([player_first_position, player_second_position])])
-            badtimer = 200 - (badtimer1 * 2)
-            if badtimer1 >= 35:
-                badtimer1 = 35
-            else:
-                badtimer1 += 5
+            badtimer = 200
+            # badtimer = 200 - (badtimer1 * 2)
+            # if badtimer1 >= 35:
+            #     badtimer1 = 35
+            # else:
+            #     badtimer1 += 5
 
         index = 0
         for index, badguy in enumerate(badguys):
             if badguy[0] < -64:
                 badguys.pop(index)
-            badguy[0] -= 3
+            badguy[0] -= 0.3
 
             # Detect collision with castle
             badrect = pygame.Rect(badguyimg.get_rect())
@@ -434,6 +464,28 @@ while True:
             playerpos[1] = player_second_position
             FUNCTIONS_INPUT[1] = False
 
+        if FUNCTIONS_INPUT[2]:
+            shoot.play()
+            accuracy[1] += 1
+            arrows.append([
+                0,
+                playerrot_pos[0] + 32,
+                playerrot_pos[1] + 32,
+                arrow
+            ])
+            FUNCTIONS_INPUT[2] = False
+
+        if FUNCTIONS_INPUT[4]:
+            shoot.play()
+            accuracy[1] += 1
+            arrows.append([
+                0,
+                playerrot_pos[0] + 32,
+                playerrot_pos[1] + 32,
+                quiz
+            ])
+            FUNCTIONS_INPUT[4] = False
+
         # if keys[1]:
         #     playerpos[0] -= movement_displacement_value
         # if keys[3]:
@@ -443,9 +495,11 @@ while True:
         if dt >= 90000:
             running = False
             exitcode = True
+            FUNCTIONS_INPUT[3] = False
         elif healthvalue <= 0:
             running = False
             exitcode = False
+            FUNCTIONS_INPUT[3] = False
         
         if accuracy[1] != 0:
             final_accuracy = (accuracy[0] * 1.0 / accuracy[1]) * 100
@@ -485,6 +539,10 @@ while True:
 
                 elif event.key == K_r:
                     restart = True
+
+        if FUNCTIONS_INPUT[3]:
+            restart = True
+            FUNCTIONS_INPUT[3] = False
 
         pygame.display.flip()
 

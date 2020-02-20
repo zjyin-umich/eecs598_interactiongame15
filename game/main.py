@@ -87,7 +87,7 @@ class ProcessImage:
             if(rc == True):
                     
                 #[pinkyX, pinkyY] = self.DetectBall(frame, 0, 154, 83, 19, 239, 115)
-                self.DetectBall(frame, 118, 117, 130, 130, 255, 255)
+                self.DetectBall(frame, 24, 33, 203, 100, 151, 255)
 
                 
                 
@@ -216,6 +216,7 @@ screen = pygame.display.set_mode((width, height))
 
 # Load Player Sprite
 player = pygame.image.load("resources/images/BOSS_sample.jpg")
+# player = pygame.transform.scale(player, (100, 85))
 
 # Load Other Sprites
 grass = pygame.image.load("resources/images/grass.png")
